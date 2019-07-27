@@ -1,8 +1,12 @@
 package fpmax
 import scala.io.StdIn.readLine
+import scala.util.Try
 
 object GuessNumberApp{
   def main(args: Array[String]):Unit ={
+
+    val random = Try(new scala.util.Random(args(0).toInt)).getOrElse(new scala.util.Random())
+
     println("What is your name?")
 
     val name = readLine()
@@ -12,7 +16,7 @@ object GuessNumberApp{
     var exec = true
 
     while (exec) {
-      val num = scala.util.Random.nextInt(5) + 1
+      val num = random.nextInt(5) + 1
 
       println("Dear " + name + ", please guess a number from 1 to 5:")
 
@@ -26,6 +30,7 @@ object GuessNumberApp{
       readLine() match {
         case "y" => exec = true
         case "n" => exec = false
+        case _ => true
       }
     }
   }
