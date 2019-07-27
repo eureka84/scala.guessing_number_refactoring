@@ -1,37 +1,13 @@
 package fpmax
-import scala.io.StdIn.readLine
-import scala.util.Try
 
-object GuessNumberApp{
-  def main(args: Array[String]):Unit ={
+import cats.effect.IO
 
-    val random = Try(new scala.util.Random(args(0).toInt)).getOrElse(new scala.util.Random())
+import scala.util.{Random, Try}
 
-    println("What is your name?")
+object GuessNumberApp {
+  def main(args: Array[String]): Unit = {
+    implicit val random: Random = Try(new Random(args(0).toInt)).getOrElse(new Random())
 
-    val name = readLine()
-
-    println("Hello, " + name + ", welcome to the game!")
-
-    var exec = true
-
-    while (exec) {
-      val num = random.nextInt(5) + 1
-
-      println("Dear " + name + ", please guess a number from 1 to 5:")
-
-      val guess = readLine().toInt
-
-      if (guess == num) println("You guessed right, " + name + "!")
-      else println("You guessed wrong, " + name + "! The number was: " + num)
-
-      println("Do you want to continue, " + name + "?")
-
-      readLine() match {
-        case "y" => exec = true
-        case "n" => exec = false
-        case _ => true
-      }
-    }
+    GuessingGame.play[IO].unsafeRunSync()
   }
 }
