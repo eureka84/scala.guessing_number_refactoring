@@ -32,9 +32,9 @@ object GuessingGame {
 
   def askPlayerToGuess[F[_] : Monad : CustomConsole](player: String, num: Int): F[Unit] =
     for {
-      _       <- writeLn(s"Dear $player, please guess a number from 1 to 5:")
-      guess   <- readGuess()
-      _       <- evaluateGuess(guess, num, player)
+      _     <- writeLn(s"Dear $player, please guess a number from 1 to 5:")
+      guess <- readGuess()
+      _     <- evaluateGuess(guess, num, player)
     } yield ()
 
   def readGuess[F[_] : Monad : CustomConsole](): F[Option[Int]] =
