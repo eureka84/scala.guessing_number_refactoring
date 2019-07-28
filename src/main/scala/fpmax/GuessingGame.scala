@@ -22,11 +22,7 @@ object GuessingGame {
     for {
       num   <- randomNaturalUpTo(5)
       _     <- askAndEvaluatePlayerGuess(player, num)
-      _     <- {
-                  val ifNo: () => F[Unit] = () => Monad[F].point(Unit)
-                  val ifYes: () => F[Unit] = () => gameLoop(player)
-                  checkContinue(player, ifNo, ifYes)
-                }
+      _     <- checkContinue(player)(Monad[F].unit, gameLoop(player))
     } yield ()
 
   def askAndEvaluatePlayerGuess[F[_] : Monad : CustomConsole](player: String, num: Int): F[Unit] =
@@ -54,14 +50,14 @@ object GuessingGame {
       writeLn(s"You guessed wrong, $player! The number was: $num")
   }
 
-  def checkContinue[F[_] : Monad : CustomConsole](player: String, ifNo: () => F[Unit], ifYes: () => F[Unit]): F[Unit] =
+  def checkContinue[F[_] : Monad : CustomConsole](player: String)(ifNo: => F[Unit], ifYes: => F[Unit]): F[Unit] =
     for {
       _     <- writeLn(s"Do you want to continue, $player?")
       ans   <- readLn()
       _     <- ans.toLowerCase() match {
-                  case "y" => ifYes()
-                  case "n" => ifNo()
-                  case _ => writeLn(s"Dear $player enter y/n").flatMap { _ => checkContinue(player, ifNo, ifYes)}
+                  case "y" => ifYes
+                  case "n" => ifNo
+                  case _ => writeLn(s"Dear $player enter y/n").flatMap { _ => checkContinue(player)(ifNo, ifYes)}
                }
     } yield ()
 

@@ -13,7 +13,7 @@ class GuessingGameTest extends FunSuite with Matchers {
 
     val (result, _) = GuessingGame.play[TestState].run(initial).value
 
-    result.outputs shouldEqual List(
+    result.producedOutputs shouldEqual List(
         "What is your name?",
         "Hello, Angelo, welcome to the game!",
         "Dear Angelo, please guess a number from 1 to 5:",
@@ -27,7 +27,7 @@ class GuessingGameTest extends FunSuite with Matchers {
 
     val (result, _) = GuessingGame.play[TestState].run(initial).value
 
-    result.outputs shouldEqual List(
+    result.producedOutputs shouldEqual List(
       "What is your name?",
       "Hello, Angelo, welcome to the game!",
       "Dear Angelo, please guess a number from 1 to 5:",
@@ -47,22 +47,22 @@ class GuessingGameTest extends FunSuite with Matchers {
 
 object Fixtures {
 
-  case class TestData(inputs: List[String], outputs: List[String], num: Int)
+  case class TestData(givenInputs: List[String], producedOutputs: List[String], numberToGuess: Int)
 
   type TestState[A] = State[TestData, A]
 
   implicit val testConsole: CustomConsole[TestState] = new CustomConsole[TestState] {
-    override def writeLn(msg: String): TestState[Unit] = State(testData =>
-      (testData.copy(outputs = testData.outputs ++ List(msg)), Unit)
+    override def writeLn(msg: String): TestState[Unit] = State(previousState =>
+      (previousState.copy(producedOutputs = previousState.producedOutputs ++ List(msg)), Unit)
     )
 
-    override def readLn(): TestState[String] = State(testData =>
-      (testData.copy(inputs = testData.inputs.tail), testData.inputs.head)
+    override def readLn(): TestState[String] = State(previousState =>
+      (previousState.copy(givenInputs = previousState.givenInputs.tail), previousState.givenInputs.head)
     )
   }
 
-  implicit val testRandomNatural: RandomNatural[TestState] = (num: Int) => State(testData =>
-    (testData, testData.num)
+  implicit val testRandomNatural: RandomNatural[TestState] = (_: Int) => State(previousState =>
+    (previousState, previousState.numberToGuess)
   )
 
 }
