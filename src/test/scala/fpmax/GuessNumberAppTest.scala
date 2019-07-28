@@ -28,7 +28,7 @@ class GuessNumberAppTest extends FunSuite with BeforeAndAfter with Matchers {
   }
 
   test("wrongGuesses") {
-    val inputs = List("Angelo", "4", "f", "3", "n").mkString(LS)
+    val inputs = List("Angelo", "4", "y", "3", "n").mkString(LS)
     val outputStream = new ByteArrayOutputStream()
 
     scala.Console.withIn(new StringReader(inputs)) {

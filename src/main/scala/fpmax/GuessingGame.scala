@@ -21,46 +21,50 @@ object GuessingGame {
   def gameLoop[F[_] : CustomConsole : RandomNatural : Monad](player: String): F[Unit] =
     for {
       num   <- randomNaturalUpTo(5)
-      _     <- askPlayerToGuess(player, num)
-      _     <- writeLn(s"Do you want to continue, $player?")
+      _     <- askAndEvaluatePlayerGuess(player, num)
       _     <- {
-              val ifNo: () => F[Unit] = () => Monad[F].point(Unit)
-              val ifYes: () => F[Unit] = () => gameLoop(player)
-              checkContinue(ifNo, ifYes)
-      }
+                  val ifNo: () => F[Unit] = () => Monad[F].point(Unit)
+                  val ifYes: () => F[Unit] = () => gameLoop(player)
+                  checkContinue(player, ifNo, ifYes)
+                }
     } yield ()
 
-  def askPlayerToGuess[F[_] : Monad : CustomConsole](player: String, num: Int): F[Unit] =
+  def askAndEvaluatePlayerGuess[F[_] : Monad : CustomConsole](player: String, num: Int): F[Unit] =
     for {
-      _     <- writeLn(s"Dear $player, please guess a number from 1 to 5:")
-      guess <- readGuess()
+      guess <- readGuess(player)
       _     <- evaluateGuess(guess, num, player)
     } yield ()
 
-  def readGuess[F[_] : Monad : CustomConsole](): F[Option[Int]] =
-    readLn().map { input: String => Try { input.toInt }.toOption }
+  def readGuess[F[_] : Monad : CustomConsole](player: String): F[Int] =
+    for {
+      _     <- writeLn(s"Dear $player, please guess a number from 1 to 5:")
+      input <- readLn()
+      guess <- Try { Monad[F].point(input.toInt)}
+                    .getOrElse(
+                        writeLn(s"Dear $player you have not entered a number")
+                          .flatMap { _ => readGuess(player) }
+                    )
+    } yield guess
 
-  def evaluateGuess[F[_] : Monad : CustomConsole](guess: Option[Int], num: Int, player: String): F[Option[Unit]] = {
-    import cats.instances.option._
-    import cats.syntax.traverse._
 
-    guess
-      .traverse { numberGuessed =>
-        if (numberGuessed == num)
-          writeLn(s"You guessed right, $player!")
-        else
-          writeLn(s"You guessed wrong, $player! The number was: $num")
-      }
+  def evaluateGuess[F[_] : Monad : CustomConsole](guess: Int, num: Int, player: String): F[Unit] = {
+    if (guess == num)
+      writeLn(s"You guessed right, $player!")
+    else
+      writeLn(s"You guessed wrong, $player! The number was: $num")
   }
 
-  def checkContinue[F[_] : Monad : CustomConsole](ifNo: () => F[Unit], ifYes: () => F[Unit]): F[Unit] =
-    readLn().flatMap { input: String =>
-      input.toLowerCase() match {
-        case "y" => ifYes()
-        case "n" => ifNo()
-        case _ => ifYes()
-      }
-    }
+  def checkContinue[F[_] : Monad : CustomConsole](player: String, ifNo: () => F[Unit], ifYes: () => F[Unit]): F[Unit] =
+    for {
+      _     <- writeLn(s"Do you want to continue, $player?")
+      input <- readLn()
+      _     <- input.toLowerCase() match {
+                  case "y" => ifYes()
+                  case "n" => ifNo()
+                  case _ => writeLn(s"Dear $player enter y/n").flatMap { _ => checkContinue(player, ifNo, ifYes)}
+               }
+    } yield ()
+
 
   def randomNaturalUpTo[F[_] : RandomNatural](upper: Int): F[Int] = RandomNatural[F].upTo(upper)
 

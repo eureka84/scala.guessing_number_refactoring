@@ -23,7 +23,7 @@ class GuessingGameTest extends FunSuite with Matchers {
   }
 
   test("wrongGuesses") {
-    val initial = TestData(List("Angelo", "4", "f", "3", "n"), List(), 5)
+    val initial = TestData(List("Angelo", "4", "f", "y", "s", "3", "n"), List(), 5)
 
     val (result, _) = GuessingGame.play[TestState].run(initial).value
 
@@ -33,6 +33,10 @@ class GuessingGameTest extends FunSuite with Matchers {
       "Dear Angelo, please guess a number from 1 to 5:",
       "You guessed wrong, Angelo! The number was: 5",
       "Do you want to continue, Angelo?",
+      "Dear Angelo enter y/n",
+      "Do you want to continue, Angelo?",
+      "Dear Angelo, please guess a number from 1 to 5:",
+      "Dear Angelo you have not entered a number",
       "Dear Angelo, please guess a number from 1 to 5:",
       "You guessed wrong, Angelo! The number was: 5",
       "Do you want to continue, Angelo?"
