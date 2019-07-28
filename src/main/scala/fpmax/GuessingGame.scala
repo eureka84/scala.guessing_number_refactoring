@@ -57,8 +57,8 @@ object GuessingGame {
   def checkContinue[F[_] : Monad : CustomConsole](player: String, ifNo: () => F[Unit], ifYes: () => F[Unit]): F[Unit] =
     for {
       _     <- writeLn(s"Do you want to continue, $player?")
-      input <- readLn()
-      _     <- input.toLowerCase() match {
+      ans   <- readLn()
+      _     <- ans.toLowerCase() match {
                   case "y" => ifYes()
                   case "n" => ifNo()
                   case _ => writeLn(s"Dear $player enter y/n").flatMap { _ => checkContinue(player, ifNo, ifYes)}
