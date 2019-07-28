@@ -1,6 +1,6 @@
 package fpmax
 
-import cats.Monad
+import cats.{Applicative, Monad}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import fpmax.Console.CustomConsole
@@ -12,17 +12,16 @@ object GuessingGame {
 
   def play[F[_] : CustomConsole : RandomNatural : Monad]: F[Unit] =
     for {
-      _     <- writeLn("What is your name?")
-      name  <- readLn()
+      name  <- ask("What is your name?")
       _     <- writeLn(s"Hello, $name, welcome to the game!")
       _     <- gameLoop(name)
     } yield ()
 
   def gameLoop[F[_] : CustomConsole : RandomNatural : Monad](player: String): F[Unit] =
     for {
-      num   <- randomNaturalUpTo(5)
+      num   <- pickRandomNaturalUpTo(5)
       _     <- askAndEvaluatePlayerGuess(player, num)
-      _     <- checkContinue(player)(Monad[F].unit, gameLoop(player))
+      _     <- checkContinue(player)(Applicative[F].unit, gameLoop(player))
     } yield ()
 
   def askAndEvaluatePlayerGuess[F[_] : Monad : CustomConsole](player: String, num: Int): F[Unit] =
@@ -33,27 +32,25 @@ object GuessingGame {
 
   def readGuess[F[_] : Monad : CustomConsole](player: String): F[Int] =
     for {
-      _     <- writeLn(s"Dear $player, please guess a number from 1 to 5:")
-      input <- readLn()
-      guess <- Try { Monad[F].point(input.toInt)}
+      input <- ask(s"Dear $player, please guess a number from 1 to 5:")
+      guess <- Try { Applicative[F].pure(input.toInt)}
                     .getOrElse(
-                        writeLn(s"Dear $player you have not entered a number")
-                          .flatMap { _ => readGuess(player) }
+                      writeLn(s"Dear $player you have not entered a number")
+                      .flatMap { _ => readGuess(player) }
                     )
     } yield guess
 
 
-  def evaluateGuess[F[_] : Monad : CustomConsole](guess: Int, num: Int, player: String): F[Unit] = {
+  def evaluateGuess[F[_] : Monad : CustomConsole](guess: Int, num: Int, player: String): F[Unit] =
     if (guess == num)
       writeLn(s"You guessed right, $player!")
     else
       writeLn(s"You guessed wrong, $player! The number was: $num")
-  }
+
 
   def checkContinue[F[_] : Monad : CustomConsole](player: String)(ifNo: => F[Unit], ifYes: => F[Unit]): F[Unit] =
     for {
-      _     <- writeLn(s"Do you want to continue, $player?")
-      ans   <- readLn()
+      ans   <- ask(s"Do you want to continue, $player?")
       _     <- ans.toLowerCase() match {
                   case "y" => ifYes
                   case "n" => ifNo
@@ -61,8 +58,9 @@ object GuessingGame {
                }
     } yield ()
 
+  def ask[F[_]: CustomConsole: Monad](question: String): F[String] = writeLn(question).flatMap(_ => readLn())
 
-  def randomNaturalUpTo[F[_] : RandomNatural](upper: Int): F[Int] = RandomNatural[F].upTo(upper)
+  def pickRandomNaturalUpTo[F[_] : RandomNatural](upper: Int): F[Int] = RandomNatural[F].upTo(upper)
 
   def writeLn[F[_] : CustomConsole](msg: String): F[Unit] = CustomConsole[F].writeLn(msg)
 
