@@ -33,11 +33,10 @@ object GuessingGame {
   def readGuess[F[_] : Monad : CustomConsole](player: String): F[Int] =
     for {
       input <- ask(s"Dear $player, please guess a number from 1 to 5:")
-      guess <- Try {
-                  Applicative[F].pure(input.toInt)
-               }.getOrElse(
-                  writeLn(s"Dear $player you have not entered a number").flatMap { _ => readGuess(player) }
-               )
+      guess <- Try { input.toInt }.toOption.fold(
+                      writeLn(s"Dear $player you have not entered a number")
+                        .flatMap { _ => readGuess(player) }
+                ) (v => Applicative[F].pure(v))
     } yield guess
 
 
